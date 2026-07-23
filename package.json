@@ -1,0 +1,35 @@
+{
+  "name": "task-list-api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "cross-env NODE_ENV=development tsx watch src/main.ts",
+    "start": "tsx src/main.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/emilisvoropajevas/task-list-api.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/emilisvoropajevas/task-list-api/issues"
+  },
+  "homepage": "https://github.com/emilisvoropajevas/task-list-api#readme",
+  "devDependencies": {
+    "@prisma/client": "6.0.1",
+    "@types/node": "22.10.1",
+    "cross-env": "7.0.3",
+    "prettier": "3.4.2",
+    "prisma": "6.0.1",
+    "tsx": "4.19.2",
+    "typescript": "6.0.3"
+  },
+  "dependencies": {
+    "@pothos/core": "^4.13.1",
+    "graphql": "^16.10.0",
+    "graphql-yoga": "^5.10.4"
+  }
+}
