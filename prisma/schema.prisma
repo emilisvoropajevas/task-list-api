@@ -1,6 +1,6 @@
 generator client {
   provider = "prisma-client"
-  output   = "../generated/prisma"
+  output   = "../lib/prisma"
 }
 
 datasource db {
@@ -8,16 +8,22 @@ datasource db {
 }
 
 generator pothos {
-  provider = "prisma-pothos-types"
+  provider     = "prisma-pothos-types"
+  clientOutput = "./prisma"
+  output       = "../lib/pothos-prisma-types.ts"
+
 }
 
+/// A list of tasks grouped under a shared name.
 model TaskList {
   id            Int         @id @default(autoincrement())
+  /// The display name shown to the user.
   name          String
   createdAt     DateTime    @default(now())
   task          Task[]
 }
 
+/// Specific task the user has created.
 model Task {
   id            Int       @id @default(autoincrement())
   title         String
