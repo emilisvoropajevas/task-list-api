@@ -70,3 +70,8 @@ All query and mutation inputs MUST be validated using Zod
   - Explicit error modelling with typed results (Neverthrow)
   - Linting and formatting setup with a config you'd defend (e.g Biome) ideally enforced via a git hook
   - A completeAllTasks style bulk mutation with sensible Semantics
+
+
+  # My notes
+  ### Decisions
+   - given a tasklist can have many tasks and a task belongs to a taskList (unique task). This is modelled as a one to many relationship
