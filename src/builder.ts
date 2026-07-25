@@ -1,20 +1,26 @@
 import SchemaBuilder from "@pothos/core";
-import { PrismaClient } from "../lib/prisma/client";
+import { PrismaClient } from "./lib/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
-import PrismaPlugin from '@pothos/plugin-prisma'
+import PrismaPlugin from '@pothos/plugin-prisma';
+import { DateTimeResolver } from "graphql-scalars";
 
-import type PrismaTypes from "../lib/pothos-prisma-types";
-import { getDatamodel } from "../lib/pothos-prisma-types";
+import type PrismaTypes from "./lib/pothos-prisma-types";
+import { getDatamodel } from "./lib/pothos-prisma-types";
 
-// Define new config file for these?
 const adapter = new PrismaPg({
     connectionString: process.env.DATABASE_URL!,
 })
 
-const prisma = new PrismaClient({ adapter });
+export const prisma = new PrismaClient({ adapter });
 
 export const builder = new SchemaBuilder<{
     PrismaTypes: PrismaTypes;
+    Scalars: {
+        DateTime: {
+            Input: Date;
+            Output: Date;
+        }
+    }
 }>({
     plugins: [PrismaPlugin],
     prisma: {
@@ -25,3 +31,5 @@ export const builder = new SchemaBuilder<{
         onUnusedQuery: process.env.NODE_ENV === 'production' ? null : 'warn',
     },
 })
+
+builder.addScalarType('DateTime', DateTimeResolver, {})

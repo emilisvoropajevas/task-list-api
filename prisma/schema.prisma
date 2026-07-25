@@ -20,7 +20,7 @@ model TaskList {
   /// The display name shown to the user.
   name          String
   createdAt     DateTime    @default(now())
-  task          Task[]
+  tasks         Task[]
 }
 
 /// Specific task the user has created.
