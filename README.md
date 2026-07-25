@@ -75,3 +75,7 @@ All query and mutation inputs MUST be validated using Zod
   # My notes
   ### Decisions
    - given a tasklist can have many tasks and a task belongs to a taskList (unique task). This is modelled as a one to many relationship
+
+   - Pagination strategy - Pointer -> Given a Tasklist real life example like google keeps, where users are constantly changing and adding data,
+   implementing offset would result in poorer performance at scale (more time spent scanning and discarding rows). for a scenario where a user adds a task while another 
+   user views the tasklist will result in a duplicate task being seen.

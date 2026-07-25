@@ -1,8 +1,9 @@
 import { builder } from "../builder";
 
-import '../types/task'
-import '../types/task-list'
-import '../schema/mutation'
-import '../schema/query'
+import '../schema/task-list'
+import '../schema/task'
+
+builder.queryType({})
+builder.mutationType({})
 
 export const schema = builder.toSchema();
