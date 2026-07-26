@@ -1,6 +1,6 @@
 generator client {
   provider = "prisma-client"
-  output   = "../lib/prisma"
+  output   = "../src/lib/prisma"
 }
 
 datasource db {
@@ -10,7 +10,7 @@ datasource db {
 generator pothos {
   provider     = "prisma-pothos-types"
   clientOutput = "./prisma"
-  output       = "../lib/pothos-prisma-types.ts"
+  output       = "../src/lib/pothos-prisma-types.ts"
 
 }
 

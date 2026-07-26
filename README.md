@@ -1,15 +1,22 @@
-# Breamdown of Task
+# Task List API
+Introduction
+
 
 ## Tech Stack
-NodeJS
-TypeScript
-YogaGQL
-Pothos GQL
-Prisma
-Zod
-Vitest
+NodeJS, Postgres, TypeScript, YogaGQL, Pothos GQL, Prisma, Zod, Vitest 
 
-### Requirements :
+## Setup Instructions
+Docker Desktop installed and running.
+
+```bash
+git clone https://github.com/emilisvoropajevas/task-list-api.git
+cd task-list-api
+docker compose up --build
+```
+This command will:
+
+1. Build the API image and generate the Prisma client.
+2. Pull and run Postgres
 
 ### Data Model
 ---
