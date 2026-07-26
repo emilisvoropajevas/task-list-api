@@ -62,7 +62,7 @@ builder.queryFields((t) => ({
         },
         resolve: async (query, root, args, ctx) => {
             const validated = validate(GetFilterCompleteTaskInput, {
-                taskListIdL: args.taskListId,
+                taskListId: args.taskListId,
                 completed: args.completed,
             })
 

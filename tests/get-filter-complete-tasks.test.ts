@@ -1,0 +1,183 @@
+import { describe, it, vi, beforeEach, expect } from "vitest";
+import { graphql } from "graphql";
+
+const mockFindMany = vi.fn();
+
+vi.mock("../src/builder", async (importOriginal) => {
+    const actual = await importOriginal<typeof import("../src/builder")>();
+    return {
+        ...actual,
+        prisma: {
+            task: { findMany: mockFindMany },
+        } as unknown as typeof actual.prisma,
+    };
+});
+
+const { schema } = await import("../src/schema");
+
+describe("getFilterCompleteTasks query", () => {
+    beforeEach(() => {
+        mockFindMany.mockReset();
+    });
+
+    it("returns tasks filtered by taskListId and completed", async () => {
+        mockFindMany.mockResolvedValue([
+            { id: 1, title: "finish docker compose", completed: true, tasklistId: 1, createdAt: new Date(), updatedAt: new Date() },
+            { id: 2, title: "write readme", completed: true, tasklistId: 1, createdAt: new Date(), updatedAt: new Date() },
+        ]);
+
+        const result = await graphql({
+            schema,
+            source: `
+                query {
+                    getFilterCompleteTasks(taskListId: "1", completed: true, first: 10) {
+                        edges {
+                            node {
+                                id
+                                title
+                                completed
+                            }
+                        }
+                    }
+                }
+            `,
+            contextValue: {},
+        });
+
+        const data = result.data as any;
+
+        expect(result.errors).toBeUndefined();
+
+        const nodes = data?.getFilterCompleteTasks?.edges.map((e: any) => e.node);
+        expect(nodes).toEqual([
+            { id: "1", title: "finish docker compose", completed: true },
+            { id: "2", title: "write readme", completed: true },
+        ]);
+
+        expect(mockFindMany).toHaveBeenCalledTimes(1);
+        expect(mockFindMany.mock.calls[0]![0]).toMatchObject({
+            where: { tasklistId: 1, completed: true },
+        });
+    });
+
+    it("omits the completed filter when not provided", async () => {
+        mockFindMany.mockResolvedValue([]);
+
+        const result = await graphql({
+            schema,
+            source: `
+                query {
+                    getFilterCompleteTasks(taskListId: "1", first: 10) {
+                        edges {
+                            node {
+                                id
+                            }
+                        }
+                    }
+                }
+            `,
+            contextValue: {},
+        });
+
+        const data = result.data as any;
+
+        expect(result.errors).toBeUndefined();
+        expect(mockFindMany.mock.calls[0]![0].where).toEqual({ tasklistId: 1 });
+    });
+
+    it("returns a validation error for a non-numeric taskListId", async () => {
+        const result = await graphql({
+            schema,
+            source: `
+                query {
+                    getFilterCompleteTasks(taskListId: "not-a-number", first: 10) {
+                        edges {
+                            node {
+                                id
+                            }
+                        }
+                    }
+                }
+            `,
+            contextValue: {},
+        });
+
+        expect(result.errors).toBeDefined();
+        expect(result.errors?.[0]?.extensions?.code).toBe("ValidationError");
+        expect(mockFindMany).not.toHaveBeenCalled();
+    });
+});
+
+it("paginates using cursor and page info", async () => {
+    // Page 1: ask for 2, mock returns 3 so Pothos can detect hasNextPage
+    mockFindMany.mockResolvedValueOnce([
+        { id: 1, title: "finish docker compose", completed: false, tasklistId: 1, createdAt: new Date(), updatedAt: new Date() },
+        { id: 2, title: "write readme", completed: false, tasklistId: 1, createdAt: new Date(), updatedAt: new Date() },
+        { id: 3, title: "buy eggs", completed: false, tasklistId: 1, createdAt: new Date(), updatedAt: new Date() },
+    ]);
+
+    const page1 = await graphql({
+        schema,
+        source: `
+            query {
+                getFilterCompleteTasks(taskListId: "1", first: 2) {
+                    edges {
+                        cursor
+                        node {
+                            id
+                        }
+                    }
+                    pageInfo {
+                        hasNextPage
+                        endCursor
+                    }
+                }
+            }
+        `,
+        contextValue: {},
+    });
+
+    expect(page1.errors).toBeUndefined();
+
+    const page1Data = page1.data as any;
+    expect(page1Data.getFilterCompleteTasks.edges.map((e: any) => e.node.id)).toEqual(["1", "2"]);
+    expect(page1Data.getFilterCompleteTasks.pageInfo.hasNextPage).toBe(true);
+
+    const endCursor = page1Data.getFilterCompleteTasks.pageInfo.endCursor;
+    expect(typeof endCursor).toBe("string");
+
+    // Page 2: use the real cursor Pothos generated, don't guess its format
+    mockFindMany.mockResolvedValueOnce([
+        { id: 3, title: "buy eggs", completed: false, tasklistId: 1, createdAt: new Date(), updatedAt: new Date() },
+    ]);
+
+    const page2 = await graphql({
+        schema,
+        source: `
+            query {
+                getFilterCompleteTasks(taskListId: "1", first: 2, after: "${endCursor}") {
+                    edges {
+                        node {
+                            id
+                        }
+                    }
+                    pageInfo {
+                        hasNextPage
+                    }
+                }
+            }
+        `,
+        contextValue: {},
+    });
+
+    expect(page2.errors).toBeUndefined();
+
+    const page2Data = page2.data as any;
+    expect(page2Data.getFilterCompleteTasks.edges.map((e: any) => e.node.id)).toEqual(["3"]);
+    expect(page2Data.getFilterCompleteTasks.pageInfo.hasNextPage).toBe(false);
+
+    // Confirm the second findMany call actually used a cursor-based query
+    const secondCall = mockFindMany.mock.calls[1]![0];
+    expect(secondCall.cursor).toBeDefined();
+    expect(secondCall.skip).toBe(1);
+});
