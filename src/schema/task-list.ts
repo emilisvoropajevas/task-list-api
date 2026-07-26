@@ -1,4 +1,9 @@
 import { builder, prisma } from "../builder";
+import { GraphQLError } from "graphql";
+import { ResultAsync } from "neverthrow";
+import { validate } from "../validation/validate";
+import { CreateTaskListInput } from "../validation/task-list";
+import { DatabaseError } from "../errors";
 
 builder.prismaObject('TaskList', {
     fields: (t) => ({
@@ -31,13 +36,31 @@ builder.mutationFields((t) => ({
             name: t.arg.string({ required: true }),
         },
         resolve: async (query, root, args, ctx) => {
-            return prisma.taskList.create({
-                ...query,
-                data: {
-                    name: args.name
+            const result = await validate(CreateTaskListInput, { name: args.name })
+            .asyncAndThen((input) => 
+                ResultAsync.fromPromise(
+                    prisma.taskList.create( {
+                        ...query,
+                        data: {
+                            name: input.name
+                        }
+                    }),
+                    (e) => new DatabaseError('Failed to create task list', e)
+                )
+            )
+
+            return result.match(
+                (taskList) => taskList,
+                (error) => {
+                    throw new GraphQLError(error.message, {
+                        extensions: { code: error._tag, ...(error._tag === 'ValidationError'
+                            ? { issues: error.issues }
+                            : {}
+                        )},
+                    })
                 }
-            })
-        },
+            )
+        }
     }),
     // Delete TaskList
     deleteTaskList: t.prismaField({

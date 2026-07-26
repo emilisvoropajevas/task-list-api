@@ -1,6 +1,7 @@
 import SchemaBuilder from "@pothos/core";
 import PrismaPlugin from '@pothos/plugin-prisma';
 import RelayPlugin from '@pothos/plugin-relay'
+import ValidationPlugin from '@pothos/plugin-validation'
 
 import { PrismaClient } from "./lib/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
@@ -24,7 +25,7 @@ export const builder = new SchemaBuilder<{
         }
     }
 }>({
-    plugins: [PrismaPlugin, RelayPlugin],
+    plugins: [PrismaPlugin, RelayPlugin, ValidationPlugin],
     relay: {
         idFieldName: 'id',
         clientMutationId: 'omit',
