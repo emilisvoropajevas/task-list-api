@@ -1,10 +1,9 @@
 import { builder, prisma } from "../builder";
-import { GraphQLError } from "graphql";
 import { ResultAsync } from "neverthrow";
 import { validate } from "../validation/validate";
-import { CreateTaskListInput } from "../validation/task-list";
-import { DatabaseError } from "../errors/errors";
+import { CreateTaskListInput, TaskListIdInput } from "../validation/task-list";
 import { mapPrismaError } from "../errors/prisma-error";
+import { toGraphQLError } from "../errors/to-graphql-error";
 
 builder.prismaObject('TaskList', {
     fields: (t) => ({
@@ -49,18 +48,9 @@ builder.mutationFields((t) => ({
                     mapPrismaError
                 )
             )
-
             return result.match(
                 (taskList) => taskList,
-                (error) => {
-                    const extensions: Record<string, unknown> = { code: error._tag }
-
-                    if (error._tag === 'ValidationError') {
-                        extensions.issues = error.message
-                    }
-
-                    throw new GraphQLError(error.message, { extensions })
-                }
+                (error) => { throw toGraphQLError(error)}
             )
         }
     }),
@@ -71,12 +61,22 @@ builder.mutationFields((t) => ({
             id: t.arg.id({ required: true }),
         },
         resolve: async (query, root, args, ctx) => {
-            return prisma.taskList.delete({
-                ...query,
-                where: {
-                    id: parseInt(args.id)
-                }
-            })
+            const result = await validate(TaskListIdInput, { id: args.id })
+                .asyncAndThen((input) => 
+                    ResultAsync.fromPromise(
+                        prisma.taskList.delete({
+                            ...query,
+                            where: {
+                                id: input.id
+                            }
+                        }),
+                        mapPrismaError
+                    )
+                )
+            return result.match(
+                (taskList) => taskList,
+                (error) => { throw toGraphQLError(error)}
+            )    
         }
     })
 }))
