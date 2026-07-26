@@ -1,4 +1,15 @@
 import { builder, prisma } from "../builder";
+import { ResultAsync } from "neverthrow";
+import { validate } from "../validation/validate";
+import { 
+    TaskIdInput, 
+    GetFilterCompleteTaskInput, 
+    AddTaskInput,
+    UpdateTaskNameInput,
+    UpdateTaskStatusInput,
+} from "../validation/task";
+import { mapPrismaError } from "../errors/prisma-error";
+import { toGraphQLError } from "../errors/to-graphql-error";
 
 builder.prismaObject('Task', {
     fields: (t) => ({
@@ -23,12 +34,22 @@ builder.queryFields((t) => ({
             taskId: t.arg.id({ required: true }),
         },
         resolve: async (query, root, args, ctx) => {
-            return prisma.task.findUniqueOrThrow({
-                ...query,
-                where: {
-                    id: parseInt(args.taskId)
-                }
-            })
+            const result = await validate(TaskIdInput, { taskId: args.taskId })
+                .asyncAndThen((input) =>
+                    ResultAsync.fromPromise(
+                        prisma.task.findFirstOrThrow({
+                            ...query,
+                            where: {
+                                id: input.taskId
+                            }
+                        }),
+                        mapPrismaError
+                    )
+                )
+            return result.match(
+                (task) => task,
+                (error) => { throw toGraphQLError(error) }
+            ) 
         }
     }),
     // Return Tasks Filtered by Completion
@@ -40,16 +61,32 @@ builder.queryFields((t) => ({
             completed: t.arg.boolean({ required: false }),
         },
         resolve: async (query, root, args, ctx) => {
-            return prisma.task.findMany({
-                ...query,
-                where: {
-                    tasklistId: parseInt(args.taskListId),
-                    ...(args.completed !== undefined && args.completed !== null
-                        ? { completed: args.completed }
-                        : {}
-                     ),
-                }
+            const validated = validate(GetFilterCompleteTaskInput, {
+                taskListIdL: args.taskListId,
+                completed: args.completed,
             })
+
+            if (validated.isErr()) {
+                throw toGraphQLError(validated.error)
+            }
+            const input = validated.value
+
+            const result = await ResultAsync.fromPromise(
+                prisma.task.findMany({
+                    ...query,
+                    where: {
+                        tasklistId: input.taskListId,
+                        ...(input.completed !== undefined && input.completed !== null
+                            ? { completed: input.completed }
+                            : {}),
+                    }
+                }),
+                mapPrismaError
+            )
+            return result.match(
+                (tasks) => tasks,
+                (error) => { throw toGraphQLError(error)}
+            )
         }
 
     })
@@ -65,13 +102,23 @@ builder.mutationFields((t) => ({
             title: t.arg.string({ required: true }),
         },
         resolve: async (query, root, args, ctx) => {
-            return prisma.task.create({
-                ...query,
-                data: {
-                    tasklistId: parseInt(args.tasklistId),
-                    title: args.title,
-                }
-            })
+            const result = await validate(AddTaskInput, { tasklistId: args.tasklistId, title: args.title })
+                .asyncAndThen((input) =>
+                    ResultAsync.fromPromise(
+                        prisma.task.create({
+                            ...query,
+                            data: {
+                                tasklistId: input.tasklistId,
+                                title: input.title,
+                            }
+                        }),
+                        mapPrismaError
+                    )
+                )
+            return result.match(
+                (task) => task,
+                (error) => { throw toGraphQLError(error) }
+            )
         }
     }),
     // Update Task Title
@@ -82,15 +129,25 @@ builder.mutationFields((t) => ({
             title: t.arg.string({ required: true }),
         },
         resolve: async (query, root, args, ctx) => {
-            return prisma.task.update({
-                ...query,
-                where: {
-                    id: parseInt(args.taskId),
-                },
-                data: {
-                    title: args.title,
-                },
-            })
+             const result = await validate(UpdateTaskNameInput, { taskId: args.taskId, title: args.title })
+                .asyncAndThen((input) =>
+                    ResultAsync.fromPromise(
+                        prisma.task.update({
+                            ...query,
+                            where: {
+                                id: input.taskId,
+                            },
+                            data: {
+                                title: input.title,
+                            },
+                        }),
+                        mapPrismaError
+                    )
+                )
+            return result.match(
+                (task) => task,
+                (error) => { throw toGraphQLError(error) }
+            )
         }
     }),
     // Update Task Status
@@ -101,15 +158,25 @@ builder.mutationFields((t) => ({
             completed: t.arg.boolean({ required: true }),
         },
         resolve: async (query, root, args, ctx) => {
-            return prisma.task.update({
-                ...query,
-                where: {
-                    id: parseInt(args.taskId),
-                },
-                data: {
-                    completed: args.completed,
-                }
-            })
+              const result = await validate(UpdateTaskStatusInput, { taskId: args.taskId, completed: args.completed })
+                .asyncAndThen((input) =>
+                    ResultAsync.fromPromise(
+                        prisma.task.update({
+                            ...query,
+                            where: {
+                                id: input.taskId,
+                            },
+                            data: {
+                                completed: input.completed,
+                            }
+                        }),
+                        mapPrismaError
+                    )
+                )
+            return result.match(
+                (task) => task,
+                (error) => { throw toGraphQLError(error) }
+            )
         }
     }),
     // Delete Task
@@ -119,12 +186,22 @@ builder.mutationFields((t) => ({
             taskId: t.arg.id({ required: true }),
         },
         resolve: async (query, root, args, ctx) => {
-            return prisma.task.delete({
-                ...query,
-                where: {
-                    id: parseInt(args.taskId),
-                }
-            })
+            const result = await validate(TaskIdInput, { taskId: args.taskId })
+                .asyncAndThen((input) =>
+                    ResultAsync.fromPromise(
+                        prisma.task.delete({
+                            ...query,
+                            where: {
+                                id: input.taskId,
+                            }
+                        }),
+                        mapPrismaError
+                    )
+                )
+            return result.match(
+                (task) => task,
+                (error) => { throw toGraphQLError(error) }
+            )
         }
     })
 }))
