@@ -11,8 +11,9 @@ builder.prismaObject('TaskList', {
     })
 })
 
+/// Get all tasks
 builder.queryFields((t) => ({
-    taskLists: t.prismaField({
+    getTaskLists: t.prismaField({
         type: ['TaskList'],
         resolve: async (query, root, args, ctx) => {
             return prisma.taskList.findMany({
@@ -23,6 +24,7 @@ builder.queryFields((t) => ({
 }))
 
 builder.mutationFields((t) => ({
+    // Add TaskList
     createTaskList: t.prismaField({
         type: 'TaskList',
         args: {
@@ -33,6 +35,21 @@ builder.mutationFields((t) => ({
                 ...query,
                 data: {
                     name: args.name
+                }
+            })
+        },
+    }),
+    // Delete TaskList
+    deleteTaskList: t.prismaField({
+        type: 'TaskList',
+        args: {
+            id: t.arg.id({ required: true }),
+        },
+        resolve: async (query, root, args, ctx) => {
+            return prisma.taskList.delete({
+                ...query,
+                where: {
+                    id: parseInt(args.id)
                 }
             })
         }
