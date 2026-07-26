@@ -6,7 +6,7 @@ export class ValidationError extends Error {
 }
 
 export class NotFoundError extends Error {
-    readonly _tag = 'ValidationError'
+    readonly _tag = 'NotFoundError'
     constructor(message: string) {
         super(message)
     }

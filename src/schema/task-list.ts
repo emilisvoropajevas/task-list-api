@@ -3,7 +3,8 @@ import { GraphQLError } from "graphql";
 import { ResultAsync } from "neverthrow";
 import { validate } from "../validation/validate";
 import { CreateTaskListInput } from "../validation/task-list";
-import { DatabaseError } from "../errors";
+import { DatabaseError } from "../errors/errors";
+import { mapPrismaError } from "../errors/prisma-error";
 
 builder.prismaObject('TaskList', {
     fields: (t) => ({
@@ -45,19 +46,20 @@ builder.mutationFields((t) => ({
                             name: input.name
                         }
                     }),
-                    (e) => new DatabaseError('Failed to create task list', e)
+                    mapPrismaError
                 )
             )
 
             return result.match(
                 (taskList) => taskList,
                 (error) => {
-                    throw new GraphQLError(error.message, {
-                        extensions: { code: error._tag, ...(error._tag === 'ValidationError'
-                            ? { issues: error.issues }
-                            : {}
-                        )},
-                    })
+                    const extensions: Record<string, unknown> = { code: error._tag }
+
+                    if (error._tag === 'ValidationError') {
+                        extensions.issues = error.message
+                    }
+
+                    throw new GraphQLError(error.message, { extensions })
                 }
             )
         }

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { Result, ok, err } from "neverthrow";
-import { ValidationError } from "../errors";
+import { ValidationError } from "../errors/errors";
 
 export function validate<T extends z.ZodTypeAny>(
     schema: T,
