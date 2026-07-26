@@ -20,7 +20,7 @@ describe("getFilterCompleteTasks query", () => {
         mockFindMany.mockReset();
     });
 
-    it("returns tasks filtered by taskListId and completed", async () => {
+    it("returns tasks filtered by taskListId and status", async () => {
         mockFindMany.mockResolvedValue([
             { id: 1, title: "finish docker compose", completed: true, tasklistId: 1, createdAt: new Date(), updatedAt: new Date() },
             { id: 2, title: "write readme", completed: true, tasklistId: 1, createdAt: new Date(), updatedAt: new Date() },
@@ -146,7 +146,7 @@ it("paginates using cursor and page info", async () => {
     const endCursor = page1Data.getFilterCompleteTasks.pageInfo.endCursor;
     expect(typeof endCursor).toBe("string");
 
-    // Page 2: use the real cursor Pothos generated, don't guess its format
+    // Page 2: uses the real cursor Pothos generated
     mockFindMany.mockResolvedValueOnce([
         { id: 3, title: "buy eggs", completed: false, tasklistId: 1, createdAt: new Date(), updatedAt: new Date() },
     ]);

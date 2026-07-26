@@ -5,6 +5,9 @@ import { CreateTaskListInput, TaskListIdInput } from "../validation/task-list";
 import { mapPrismaError } from "../errors/prisma-error";
 import { toGraphQLError } from "../errors/to-graphql-error";
 
+// Reminder - ResultAsync.fromPromise () transforms unsafe promises. into type-safe eorr handled resultasync. 
+// Converts potential rejections int oa specific error type. 
+
 builder.prismaObject('TaskList', {
     fields: (t) => ({
         id: t.exposeID('id'),

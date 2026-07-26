@@ -6,6 +6,7 @@ export function validate<T extends z.ZodTypeAny>(
     schema: T,
     input: unknown
 ): Result<z.infer<T>, ValidationError> {
+    // safe parse to get back a plain result object of either zod error or success
     const result = schema.safeParse(input)
     if (!result.success) {
         const issues = result.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`)

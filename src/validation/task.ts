@@ -7,6 +7,7 @@ export const TaskIdInput = z.object({
 
 export const GetFilterCompleteTaskInput = z.object({
     taskListId: idSchema,
+    // completed allowed to be null to return all records
     completed: z.boolean().optional().nullable(),
 })
 
