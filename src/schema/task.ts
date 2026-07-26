@@ -32,8 +32,9 @@ builder.queryFields((t) => ({
         }
     }),
     // Return Tasks Filtered by Completion
-    getFilterCompleteTasks: t.prismaField({
-        type: ['Task'],
+    getFilterCompleteTasks: t.prismaConnection({
+        type: 'Task',
+        cursor: 'id',
         args: {
             taskListId: t.arg.id({ required: true }),
             completed: t.arg.boolean({ required: false }),
